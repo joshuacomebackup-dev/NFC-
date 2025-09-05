@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My NFC Digital Card</title>
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #f3f4f6;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+  }
+  .edit-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .header {
+    background: linear-gradient(135deg,#2563eb,#1e40af);
+    color: #fff;
+    padding: 60px 20px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .header img {
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    position: absolute;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+  }
+  .header h2 { margin-top: 140px; margin-bottom: 10px; }
+  .icons {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px;
+    background: #f9fafb;
+  }
+  .icons a {
+    text-decoration: none;
+    font-size: 22px;
+    color: #2563eb;
+    cursor: pointer;
+  }
+  .section { padding: 20px; }
+  .section h3 { margin: 0 0 10px; font-size: 16px; color: #111827; }
+  .section p { margin: 4px 0; font-size: 14px; color: #374151; }
+  .button {
+    display: block;
+    background: #2563eb;
+    color: #fff;
+    padding: 12px;
+    margin: 20px;
+    text-align: center;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .hidden { display: none; }
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 4px 0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <button class="edit-btn" onclick="requestPin()">Edit</button>
+    
+    <div class="header">
+      <img id="profilePic" src="https://drive.google.com/uc?export=view&id=1FqVRAVauDveGTF5iLq-51_xZ5N7bSPn0" alt="Profile Photo">
+      <h2 id="name">Your Full Name</h2>
+    </div>
+
+    <div class="icons">
+      <a id="phoneLink" href="tel:+639123456789">📞</a>
+      <a id="emailLink" href="mailto:youremail@example.com">✉️</a>
+      <a id="mapLink" href="https://maps.google.com/?q=Your+Address" target="_blank">📍</a>
+      <a href="javascript:void(0)" onclick="requestFilePin()">📂</a>
+    </div>
+
+    <div class="section">
+      <h3>Contact Info</h3>
+      <p><strong>Job: </strong> <span id="title">Your Position</span></p>
+      <p><strong>Company: </strong> <span id="company">Your Company</span></p>
+      <p><strong>GLOBE: </strong> <span id="phone">+63 912 345 6789</span></p>
+      <p><strong>DITO:</strong> <span id="phone2">+63 987 654 3210</span></p>
+      <p><strong>Email 1: </strong> <span id="email">youremail@example.com</span></p>
+      <p><strong>Email 2: </strong> <span id="email2">altmail@example.com</span></p>
+      <p><strong>Address: </strong> <span id="address">City, State, ZIP</span></p>
+    </div>
+
+    <a class="button" id="saveVCF" href="#">Add to Contact</a>
+  </div>
+
+  <!-- Edit Form -->
+  <div id="editForm" class="hidden card" style="margin-top:20px;padding:20px;">
+    <h3>Edit Profile</h3>
+    <input type="file" accept="image/*" onchange="previewPhoto(event)">
+    <input type="text" id="editName" placeholder="Full Name">
+    <input type="text" id="editTitle" placeholder="Job Title / Position">
+    <input type="text" id="editCompany" placeholder="Company">
+    <input type="text" id="editPhone" placeholder="Phone 1">
+    <input type="text" id="editPhone2" placeholder="Phone 2">
+    <input type="email" id="editEmail" placeholder="Email 1">
+    <input type="email" id="editEmail2" placeholder="Email 2">
+    <textarea id="editAddress" placeholder="Address"></textarea>
+    <input type="text" id="editFile" placeholder="Google Drive Link">
+    <button onclick="saveChanges()">Save</button>
+  </div>
+
+<script>
+  const PIN = "110318";      // Edit PIN
+  const FILE_PIN = "2002"; // File access PIN
+
+  function requestPin() {
+    let input = prompt("Enter PIN to edit:");
+    if (input === PIN) {
+      document.getElementById("editForm").classList.remove("hidden");
+      loadForm();
+    } else if (input !== null) {
+      alert("Incorrect PIN");
+    }
+  }
+
+  function requestFilePin() {
+    let input = prompt("Enter PIN to open file:");
+    if (input === FILE_PIN) {
+      let fileLink = localStorage.getItem("file") || "https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing";
+      window.open(fileLink, "_blank");
+    } else if (input !== null) {
+      alert("Incorrect PIN");
+    }
+  }
+
+  function previewPhoto(event) {
+    let reader = new FileReader();
+    reader.onload = function(){
+      document.getElementById("profilePic").src = reader.result;
+      localStorage.setItem("profilePic", reader.result);
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  function saveChanges() {
+    let name = document.getElementById("editName").value;
+    let title = document.getElementById("editTitle").value;
+    let company = document.getElementById("editCompany").value;
+    let phone = document.getElementById("editPhone").value;
+    let phone2 = document.getElementById("editPhone2").value;
+    let email = document.getElementById("editEmail").value;
+    let email2 = document.getElementById("editEmail2").value;
+    let address = document.getElementById("editAddress").value;
+    let file = document.getElementById("editFile").value;
+
+    if(name) { document.getElementById("name").innerText = name; localStorage.setItem("name", name); }
+    if(title) { document.getElementById("title").innerText = title; localStorage.setItem("title", title); }
+    if(company) { document.getElementById("company").innerText = company; localStorage.setItem("company", company); }
+    if(phone) { 
+      document.getElementById("phone").innerText = phone; 
+      document.getElementById("phoneLink").href = "tel:"+phone;
+      localStorage.setItem("phone", phone); 
+    }
+    if(phone2) { document.getElementById("phone2").innerText = phone2; localStorage.setItem("phone2", phone2); }
+    if(email) { 
+      document.getElementById("email").innerText = email; 
+      document.getElementById("emailLink").href = "mailto:"+email;
+      localStorage.setItem("email", email); 
+    }
+    if(email2) { document.getElementById("email2").innerText = email2; localStorage.setItem("email2", email2); }
+    if(address) { 
+      document.getElementById("address").innerText = address; 
+      document.getElementById("mapLink").href = "https://maps.google.com/?q="+encodeURIComponent(address);
+      localStorage.setItem("address", address); 
+    }
+    if(file) { 
+      localStorage.setItem("file", file); 
+    }
+
+    updateVCF();
+    document.getElementById("editForm").classList.add("hidden");
+  }
+
+  function loadForm() {
+    document.getElementById("editName").value = localStorage.getItem("name") || "";
+    document.getElementById("editTitle").value = localStorage.getItem("title") || "";
+    document.getElementById("editCompany").value = localStorage.getItem("company") || "";
+    document.getElementById("editPhone").value = localStorage.getItem("phone") || "";
+    document.getElementById("editPhone2").value = localStorage.getItem("phone2") || "";
+    document.getElementById("editEmail").value = localStorage.getItem("email") || "";
+    document.getElementById("editEmail2").value = localStorage.getItem("email2") || "";
+    document.getElementById("editAddress").value = localStorage.getItem("address") || "";
+    document.getElementById("editFile").value = localStorage.getItem("file") || "";
+  }
+
+  function updateVCF() {
+    let name = localStorage.getItem("name") || "My Contact";
+    let phone = localStorage.getItem("phone") || "";
+    let phone2 = localStorage.getItem("phone2") || "";
+    let email = localStorage.getItem("email") || "";
+    let email2 = localStorage.getItem("email2") || "";
+    let company = localStorage.getItem("company") || "";
+    let title = localStorage.getItem("title") || "";
+    let vcf = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+ORG:${company}
+TITLE:${title}
+TEL:${phone}
+TEL:${phone2}
+EMAIL:${email}
+EMAIL:${email2}
+END:VCARD`;
+    document.getElementById("saveVCF").href = "data:text/vcard," + encodeURIComponent(vcf);
+    document.getElementById("saveVCF").download = name.replace(/\s+/g,"_")+".vcf";
+  }
+
+  window.onload = function() {
+    if(localStorage.getItem("profilePic")) document.getElementById("profilePic").src = localStorage.getItem("profilePic");
+    if(localStorage.getItem("name")) document.getElementById("name").innerText = localStorage.getItem("name");
+    if(localStorage.getItem("title")) document.getElementById("title").innerText = localStorage.getItem("title");
+    if(localStorage.getItem("company")) document.getElementById("company").innerText = localStorage.getItem("company");
+    if(localStorage.getItem("phone")) {
+      document.getElementById("phone").innerText = localStorage.getItem("phone");
+      document.getElementById("phoneLink").href = "tel:"+localStorage.getItem("phone");
+    }
+    if(localStorage.getItem("phone2")) document.getElementById("phone2").innerText = localStorage.getItem("phone2");
+    if(localStorage.getItem("email")) {
+      document.getElementById("email").innerText = localStorage.getItem("email");
+      document.getElementById("emailLink").href = "mailto:"+localStorage.getItem("email");
+    }
+    if(localStorage.getItem("email2")) document.getElementById("email2").innerText = localStorage.getItem("email2");
+    if(localStorage.getItem("address")) {
+      document.getElementById("address").innerText = localStorage.getItem("address");
+      document.getElementById("mapLink").href = "https://maps.google.com/?q="+encodeURIComponent(localStorage.getItem("address"));
+    }
+    updateVCF();
+  };
+</script>
+</body>
+</html>
